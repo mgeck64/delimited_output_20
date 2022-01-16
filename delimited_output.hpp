@@ -35,25 +35,24 @@ inline std::ostream& operator<<(std::ostream& out, const c_str_wrapper& str)
 
 // delimited():
 
-// delimited() can be used to output a container-like object as delimited text;
-// for example:
+// delimited() can be used to output a range as delimited text; for example:
 //    auto arr = std::array{1, 3, 5, 7, 9};
 //    cout << delimited(arr);
 // outputs:
 //    1, 3, 5, 7, 9
-// However, strings (which are char containers) as an exception are output
-// normally, so:
+// However, strings (which are char ranges) as an exception are output normally,
+// so:
 //    cout << delimited(std::string{"Hello"})
 // outputs:
 //    Hello
 
-// delimited() can also be used to output an iterator range as delimited text;
-// for example:
+// delimited() can also be used to output a sequence delimited by a pair of
+// iterators as delimited text; for example:
 //    cout << delimited(arr.begin() + 1, arr.end() - 1)
 // outputs:
 //    3, 5, 7
 
-// delimited() can also be used to output a pair or tuple; for example:
+// delimited() can also be used to output a pair or a tuple; for example:
 //    cout << delimited(std::pair{1, "One"})
 // outputs:
 //    1: One
@@ -69,8 +68,8 @@ inline std::ostream& operator<<(std::ostream& out, const c_str_wrapper& str)
 // The logic for the above behavior is applied recursively, so, for example, if
 // delimited() is given a map, the pair elements contained therein will be
 // output as described, with the addition that for such elements, pair elements
-// will be enclosed in square brackets and container-like and tuple elements
-// will be enclosed in parentheses; see delimiters below for details.
+// will be enclosed in square brackets and range and tuple elements will be
+// enclosed in parentheses; see delimiters below for details.
 
 // Delimiter values can be specified via setter functions; for example:
 //     cout << delimited(arr).delimiter(" - ").empty("Empty")
@@ -78,9 +77,9 @@ inline std::ostream& operator<<(std::ostream& out, const c_str_wrapper& str)
 // set of delimiter values is in delimiters below and the complete set of setter
 // functions is in delimiter_inserter below.
 
-// delimited() returns a helper object that stores a reference or iterator range
+// delimited() returns a helper object that stores a reference or iterator pair
 // to the object or sequence to output, and thus has the invalidation rule for
-// that reference or iterator range. Note: an expression such as
+// that reference or iterator pair. Note: an expression such as
 //    std::cout << delimited(std::string("Hello"))
 // is OK as the helper object will be valid for the duration of the expression.
 
@@ -89,7 +88,7 @@ inline std::ostream& operator<<(std::ostream& out, const c_str_wrapper& str)
 // what I want to accomplish in this project.
 
 template <typename> class delimited_inserter;
-template <typename> class delimited_inserter_for_range;
+template <typename> class delimited_inserter_for_sequence;
 struct delimiters;
 
 template <typename Object>
@@ -102,20 +101,20 @@ inline auto delimited(const Object& obj, const delimiters& delims)
 
 template <typename Iterator>
 inline auto delimited(Iterator begin, Iterator end)
-{return delimited_inserter_for_range{begin, end};}
+{return delimited_inserter_for_sequence{begin, end};}
 
 template <typename Iterator>
 inline auto delimited(Iterator begin, Iterator end, const delimiters& delims)
-{return delimited_inserter_for_range{begin, end, delims};}
+{return delimited_inserter_for_sequence{begin, end, delims};}
 
 // note: delimited() is technically redundant but convenient shorthand for
-// instantiating delimited_inserter and delimited_inserter_for_range
+// instantiating delimited_inserter and delimited_inserter_for_sequence
 
 // delimiters:
 
 struct delimiters { // delimiters and related values
     // herein, "collection" refers to a sequence or collection of elements such
-    // as in a container, iterator range, tuple or pair
+    // as in a container, sequence, tuple or pair
 
     c_str_wrapper base_delim = ", "; // base-level collection delimiter (except for pair)
     // example for tuple<int, string, int>: 1, Two, 3
@@ -143,7 +142,7 @@ struct delimiters { // delimiters and related values
     // n/a for string or default output; for example, string("Hello") and
     // int(123) will be output normally regardless of this setting
 
-    c_str_wrapper empty = "<empty>"; // text for empty object or iterator range
+    c_str_wrapper empty = "<empty>"; // text for empty object or empty sequence
 
     // note: delimiter stores c_str_wrappers and thus has c_str_wrapper's
     // invalidation rule
@@ -164,7 +163,7 @@ public:
     // inserter:
 
     friend std::ostream& operator<<(std::ostream& out, const delimited_inserter& di)
-    {output(di.obj, di.delims, di.delims.base_as_sub, out); return out;}
+    {output_helper(di.obj, di.delims, di.delims.base_as_sub, out); return out;}
 
     // value setters:
     // Each function return a reference to *this so calls can be chained; e.g.,
@@ -204,38 +203,36 @@ public:
     {delims.empty = str; return *this;}
 };
 
-// iterator_range, delimited_inserter_for_range:
+// sequence, delimited_inserter_for_sequence:
 
 template <typename Iterator>
-struct iterator_range { // container-like object for delimited_inserter
+struct sequence {
     Iterator begin_itr, end_itr;
     Iterator begin() const {return begin_itr;}
     Iterator end() const {return end_itr;}
 };
 
 template <typename Iterator>
-class delimited_inserter_for_range:
-        public delimited_inserter<iterator_range<Iterator>> {
-    iterator_range<Iterator> range;
+class delimited_inserter_for_sequence: public delimited_inserter<sequence<Iterator>> {
+    sequence<Iterator> seq;
 public:
-    delimited_inserter_for_range(Iterator begin, Iterator end)
-        : delimited_inserter<iterator_range<Iterator>>{range} {range.begin_itr = begin; range.end_itr = end;}
-    delimited_inserter_for_range(Iterator begin, Iterator end, const delimiters& delims)
-        : delimited_inserter<iterator_range<Iterator>>{range, delims} {range.begin_itr = begin; range.end_itr = end;}
+    delimited_inserter_for_sequence(Iterator begin, Iterator end)
+        : delimited_inserter<sequence<Iterator>>{seq} {seq.begin_itr = begin; seq.end_itr = end;}
+    delimited_inserter_for_sequence(Iterator begin, Iterator end, const delimiters& delims)
+        : delimited_inserter<sequence<Iterator>>{seq, delims} {seq.begin_itr = begin; seq.end_itr = end;}
 };
 
-// output() functions:
-// (output() can be additionally overloaded for other types)
+// output helper functions:
 
 // output a pair:
 
 template <typename T1, typename T2>
-void output(const std::pair<T1, T2>& pair, const delimiters& delims, bool as_sub, std::ostream& out) {
+void output_helper(const std::pair<T1, T2>& pair, const delimiters& delims, bool as_sub, std::ostream& out) {
     if (as_sub)
         out << delims.pair_prefix;
-    output(pair.first, delims, true, out);
+    output_helper(pair.first, delims, true, out);
     out << delims.pair_delim;
-    output(pair.second, delims, true, out);
+    output_helper(pair.second, delims, true, out);
     if (as_sub)
         out << delims.pair_suffix;
 }
@@ -243,7 +240,7 @@ void output(const std::pair<T1, T2>& pair, const delimiters& delims, bool as_sub
 // output a tuple:
 
 template<typename... Ts>
-void output(const std::tuple<Ts...>& tuple, const delimiters& delims, bool as_sub, std::ostream& out)
+void output_helper(const std::tuple<Ts...>& tuple, const delimiters& delims, bool as_sub, std::ostream& out)
 {
     if (as_sub)
         out << delims.sub_prefix;
@@ -254,53 +251,31 @@ void output(const std::tuple<Ts...>& tuple, const delimiters& delims, bool as_su
         auto delim = as_sub ? delims.sub_delim.c_str() : delims.base_delim.c_str();
         auto delim2 = "";
         std::apply([&](const auto&... args) {
-            ((out << delim2, output(args, delims, true, out), delim2 = delim), ...);
+            ((out << delim2, output_helper(args, delims, true, out), delim2 = delim), ...);
         }, tuple);
     }
     if (as_sub)
         out << delims.sub_suffix;
 }
 
-// output a container-like object:
+// output a range:
 
-template <typename, typename = std::void_t<>>
-constexpr bool is_iterator = std::false_type::value;
-
-template <typename T>
-constexpr bool is_iterator<T, std::void_t<
-// T is an iterator type if it supports increment and dereference operations
-    decltype(++std::declval<T&>()),
-    decltype(*std::declval<T&>())
->> = std::true_type::value;
-
-template <typename, typename = std::void_t<>>
-constexpr bool is_container_like = std::false_type::value;
-
-template <typename T>
-constexpr bool is_container_like<T, std::void_t<
-// for purposes here, if begin() and end() are const members of T and each
-// returns an iterator then assume T is a container-like type
-    std::enable_if_t<is_iterator<decltype(std::declval<const T>().begin())>>,
-    std::enable_if_t<is_iterator<decltype(std::declval<const T>().end())>>
->> = std::true_type::value;
-
-template <typename T>
-inline std::enable_if_t<is_container_like<T>, void>
-output(const T& cont, const delimiters& delims, bool as_sub, std::ostream& out)
+template <std::ranges::range T>
+void output_helper(const T& range, const delimiters& delims, bool as_sub, std::ostream& out)
 {
     if (as_sub)
         out << delims.sub_prefix;
-    auto begin = cont.begin();
-    auto end = cont.end();
+    auto begin = range.begin();
+    auto end = range.end();
     if (begin == end)
         out << delims.empty;
     else {
         auto itr = begin;
-        output(*itr, delims, true, out);
+        output_helper(*itr, delims, true, out);
         auto delim = as_sub ? delims.sub_delim : delims.base_delim;
         while (++itr != end) {
             out << delim;
-            output(*itr, delims, true, out);
+            output_helper(*itr, delims, true, out);
         }
     }
     if (as_sub)
@@ -309,28 +284,24 @@ output(const T& cont, const delimiters& delims, bool as_sub, std::ostream& out)
 
 // output a string:
 
-inline void output(const char* str, const delimiters& delims, bool, std::ostream& out)
+inline void output_helper(const char* str, const delimiters& delims, bool, std::ostream& out)
 {auto wstr = c_str_wrapper(str); out << (*wstr.c_str() ? wstr : delims.empty);}
 
-inline void output(const std::string& str, const delimiters& delims, bool, std::ostream& out)
+inline void output_helper(const std::string& str, const delimiters& delims, bool, std::ostream& out)
 {if (str.size()) out << str; else out << delims.empty;}
 
-inline void output(const std::string_view& str, const delimiters& delims, bool, std::ostream& out)
+inline void output_helper(const std::string_view& str, const delimiters& delims, bool, std::ostream& out)
 {if (str.size()) out << str; else out << delims.empty;}
 
 // default output:
 
-template <typename, typename = std::void_t<>>
-struct is_output_declared_for : std::false_type {};
-
 template <typename T>
-struct is_output_declared_for<T, std::void_t<
-    decltype(output(std::declval<T>(), std::declval<delimiters>(), std::declval<bool>(), std::declval<std::ostream&>()))
->> : std::true_type {};
+concept OstreamInsertable = requires(std::ostream& out, const T& x) {
+    {out << x} -> std::convertible_to<std::ostream&>;
+};
 
-template <typename T>
-inline std::enable_if_t<!is_output_declared_for<T>::value, void>
-output(const T& x, const delimiters&, bool, std::ostream& out)
+template <OstreamInsertable T>
+void output_helper(const T& x, const delimiters&, bool, std::ostream& out)
 {out << x;}
 
 
