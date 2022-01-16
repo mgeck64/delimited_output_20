@@ -40,7 +40,7 @@ all: prep release
 #
 # Debug rules
 #
-debug: $(DBGEXE)
+debug: make_dbgdir $(DBGEXE)
 
 $(DBGEXE): $(DBGOBJS)
 		$(CCXX) -o $(DBGEXE) $^
@@ -56,7 +56,7 @@ $(DBGDIR)/%.o: %.c
 #
 # Release rules
 #
-release: $(RELEXE)
+release: make_reldir $(RELEXE)
 
 $(RELEXE): $(RELOBJS)
 		$(CCXX) -o $(RELEXE) $^
@@ -72,10 +72,13 @@ $(RELDIR)/%.o: %.c
 #
 # Other rules
 #
-prep:
-		@mkdir -p $(DBGDIR) $(RELDIR)
+make_dbgdir:
+		@mkdir -p $(DBGDIR)
+
+make_reldir:
+		@mkdir -p $(RELDIR)
 
 remake: clean all
 
 clean:
-		rm -f $(RELEXE) $(RELOBJS) $(RELDEPS) $(DBGEXE) $(DBGOBJS) $(DBGDEPS)
+		@rm -r -f $(RELDIR) $(DBGDIR)
