@@ -7,6 +7,7 @@
 #include <map>
 #include <tuple>
 #include <string>
+#include <sstream>
 
 int main() {
     using namespace std;
@@ -39,19 +40,23 @@ int main() {
     }
     {
         cout << endl;
-        cout << delimited(tuple()) << endl;
-        cout << delimited("Hello!") << endl;
-        cout << delimited(string("Hello again!")) << endl;
-        cout << delimited("").empty("empty string") << endl;
-        cout << delimited(6) << endl;
+        std::stringstream ss;
+        ss << delimited(tuple()) << '\n';
+        ss << delimited("Hello!") << '\n';
+        ss << delimited(string("Hello again!")) << '\n';
+        ss << delimited("").empty("empty string") << '\n';
+        ss << delimited(6);
+        cout << ss.str() << endl;
     }
     {
         cout << endl;
+        std::stringstream ss;
         auto arr = array{7, 3, 11, 1, 9, 5};
-        cout << delimited(arr) << endl;
+        ss << delimited(arr) << '\n';
         sort(arr.begin(), arr.end());
-        cout << delimited(arr) << endl;
-        cout << delimited(arr.begin() + 1, arr.end() - 1) << endl;
+        ss << delimited(arr) << '\n';
+        ss << delimited(arr.begin() + 1, arr.end() - 1);
+        cout << ss.str() << endl;
     }
     {
         cout << endl;
