@@ -35,7 +35,8 @@ inline std::ostream& operator<<(std::ostream& out, const c_str_wrapper& str)
 
 // delimited():
 
-// delimited() can be used to output a range as delimited text; for example:
+// delimited() can be used to output a range (container-like object) as
+// delimited text; for example:
 //    auto arr = std::array{1, 3, 5, 7, 9};
 //    cout << delimited(arr);
 // outputs:
@@ -87,8 +88,11 @@ inline std::ostream& operator<<(std::ostream& out, const c_str_wrapper& str)
 // ostream but not basic_ostream; that generalization is beyond the scope of
 // what I want to accomplish in this project.
 
+template <typename T>
+concept iterator = std::input_or_output_iterator<T>;
+
 template <typename> class delimited_inserter;
-template <typename> class delimited_inserter_for_sequence;
+template <iterator> class delimited_inserter_for_sequence;
 struct delimiters;
 
 template <typename Object>
@@ -99,11 +103,11 @@ template <typename Object>
 inline auto delimited(const Object& obj, const delimiters& delims)
 {return delimited_inserter{obj, delims};}
 
-template <typename Iterator>
+template <iterator Iterator>
 inline auto delimited(Iterator begin, Iterator end)
 {return delimited_inserter_for_sequence{begin, end};}
 
-template <typename Iterator>
+template <iterator Iterator>
 inline auto delimited(Iterator begin, Iterator end, const delimiters& delims)
 {return delimited_inserter_for_sequence{begin, end, delims};}
 
@@ -205,14 +209,14 @@ public:
 
 // sequence, delimited_inserter_for_sequence:
 
-template <typename Iterator>
+template <iterator Iterator>
 struct sequence {
     Iterator begin_itr, end_itr;
     Iterator begin() const {return begin_itr;}
     Iterator end() const {return end_itr;}
 };
 
-template <typename Iterator>
+template <iterator Iterator>
 class delimited_inserter_for_sequence: public delimited_inserter<sequence<Iterator>> {
     sequence<Iterator> seq;
 public:
@@ -296,11 +300,11 @@ inline void output_helper(const std::string_view& str, const delimiters& delims,
 // default output:
 
 template <typename T>
-concept OstreamInsertable = requires(std::ostream& out, const T& x) {
+concept ostream_insertable = requires(std::ostream& out, const T& x) {
     {out << x} -> std::convertible_to<std::ostream&>;
 };
 
-template <OstreamInsertable T>
+template <ostream_insertable T>
 void output_helper(const T& x, const delimiters&, bool, std::ostream& out)
 {out << x;}
 
