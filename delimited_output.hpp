@@ -30,7 +30,8 @@ public:
     // note2: c_str_wrapper has the same invalidation rule as const char*
 };
 
-inline std::ostream& operator<<(std::ostream& out, const c_str_wrapper& str)
+template <typename CharT, typename Traits>
+inline std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& out, const c_str_wrapper& str)
 {return out << str.c_str();}
 
 // delimited():
@@ -83,10 +84,6 @@ inline std::ostream& operator<<(std::ostream& out, const c_str_wrapper& str)
 // that reference or iterator pair. Note: an expression such as
 //    std::cout << delimited(std::string("Hello"))
 // is OK as the helper object will be valid for the duration of the expression.
-
-// Implementation note: delimited output functionality is implemented for
-// ostream but not basic_ostream; that generalization is beyond the scope of
-// what I want to accomplish in this project.
 
 template <typename T>
 concept iterator = std::input_or_output_iterator<T>;
@@ -166,7 +163,8 @@ public:
 
     // inserter:
 
-    friend std::ostream& operator<<(std::ostream& out, const delimited_inserter& di)
+    template <typename CharT, typename Traits>
+    friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& out, const delimited_inserter& di)
     {output_helper(di.obj, di.delims, di.delims.base_as_sub, out); return out;}
 
     // value setters:
@@ -230,8 +228,8 @@ public:
 
 // output a pair:
 
-template <typename T1, typename T2>
-void output_helper(const std::pair<T1, T2>& pair, const delimiters& delims, bool as_sub, std::ostream& out) {
+template <typename T1, typename T2, typename CharT, typename Traits>
+void output_helper(const std::pair<T1, T2>& pair, const delimiters& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out) {
     if (as_sub)
         out << delims.pair_prefix;
     output_helper(pair.first, delims, true, out);
@@ -243,8 +241,8 @@ void output_helper(const std::pair<T1, T2>& pair, const delimiters& delims, bool
 
 // output a tuple:
 
-template<typename... Ts>
-void output_helper(const std::tuple<Ts...>& tuple, const delimiters& delims, bool as_sub, std::ostream& out)
+template<typename... Ts, typename CharT, typename Traits>
+void output_helper(const std::tuple<Ts...>& tuple, const delimiters& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out)
 {
     if (as_sub)
         out << delims.sub_prefix;
@@ -264,8 +262,8 @@ void output_helper(const std::tuple<Ts...>& tuple, const delimiters& delims, boo
 
 // output a range:
 
-template <std::ranges::range T>
-void output_helper(const T& range, const delimiters& delims, bool as_sub, std::ostream& out)
+template <std::ranges::range T, typename CharT, typename Traits>
+void output_helper(const T& range, const delimiters& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out)
 {
     if (as_sub)
         out << delims.sub_prefix;
@@ -288,24 +286,27 @@ void output_helper(const T& range, const delimiters& delims, bool as_sub, std::o
 
 // output a string:
 
-inline void output_helper(const char* str, const delimiters& delims, bool, std::ostream& out)
+template <typename CharT, typename Traits>
+inline void output_helper(const char* str, const delimiters& delims, bool, std::basic_ostream<CharT, Traits>& out)
 {auto wstr = c_str_wrapper(str); out << (*wstr.c_str() ? wstr : delims.empty);}
 
-inline void output_helper(const std::string& str, const delimiters& delims, bool, std::ostream& out)
+template <typename CharT, typename Traits>
+inline void output_helper(const std::string& str, const delimiters& delims, bool, std::basic_ostream<CharT, Traits>& out)
 {if (str.size()) out << str; else out << delims.empty;}
 
-inline void output_helper(const std::string_view& str, const delimiters& delims, bool, std::ostream& out)
+template <typename CharT, typename Traits>
+inline void output_helper(const std::string_view& str, const delimiters& delims, bool, std::basic_ostream<CharT, Traits>& out)
 {if (str.size()) out << str; else out << delims.empty;}
 
 // default output:
 
-template <typename T>
-concept ostream_insertable = requires(std::ostream& out, const T& x) {
-    {out << x} -> std::convertible_to<std::ostream&>;
+template <typename T, typename CharT, typename Traits>
+concept ostream_insertable = requires(std::basic_ostream<CharT, Traits>& out, const T& x) {
+    {out << x} -> std::convertible_to<std::basic_ostream<CharT, Traits>&>;
 };
 
-template <ostream_insertable T>
-void output_helper(const T& x, const delimiters&, bool, std::ostream& out)
+template <typename CharT, typename Traits, ostream_insertable<CharT, Traits> T>
+inline void output_helper(const T& x, const delimiters&, bool, std::basic_ostream<CharT, Traits>& out)
 {out << x;}
 
 
