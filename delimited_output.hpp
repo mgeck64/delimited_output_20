@@ -8,32 +8,6 @@
 
 namespace delimited_output {
 
-// c_str_wrapper:
-// A simple wrapper for C style strings that checks for null pointer. I tried
-// using std::string_view as a wrapper for C style strings but I became
-// disenchanted with it, at least for my purpose here. First, string_view stores
-// both a pointer to the string and its length (and not just a pointer); second,
-// string_view computes the length of the string on construction, though this is
-// ostensibly a compile-time computation for string literals.
-
-class c_str_wrapper {
-    const char* p;
-public:
-    c_str_wrapper(const char* p_)
-        : p{p_ ? p_ : "c_str_wrapper: null pointer"} // or throw an exception?
-    {assert(p);}
-
-    const char* c_str() const {return p;} // mirroring std::string::c_str()
-
-    // note: no conversion operator to const char* is provided because of
-    // well-known problems with automatic conversions.
-    // note2: c_str_wrapper is valid for so long as the stored pointer is valid
-};
-
-template <typename CharT, typename Traits>
-inline std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& out, const c_str_wrapper& str)
-{return out << str.c_str();}
-
 // delimited():
 
 // delimited() can be used to output a range (container-like object) as
@@ -117,20 +91,20 @@ struct delimiters { // delimiters and related values
     // herein, "collection" refers to a sequence or collection of elements such
     // as in a container, sequence, tuple or pair
 
-    c_str_wrapper base_delim = ", "; // base-level collection delimiter (except for pair)
+    const char* base_delim = ", "; // base-level collection delimiter (except for pair)
     // example for tuple<int, string, int>: 1, Two, 3
     // example for container of ints: 10, 20, 30, 40, 50
 
     // values for recursively output sub-level collection (except for pair):
-    c_str_wrapper sub_prefix = "("; // sub-level collection prefix
-    c_str_wrapper sub_delim = ", "; // sub-level delimiter
-    c_str_wrapper sub_suffix = ")"; // sub-level collection suffix
+    const char* sub_prefix = "("; // sub-level collection prefix
+    const char* sub_delim = ", "; // sub-level delimiter
+    const char* sub_suffix = ")"; // sub-level collection suffix
     // example for container of tuples: (1, Two, 3), (4, Five, 6), (7, Eight, 9)
 
     // values for base-level and recursively output sub-level pair:
-    c_str_wrapper pair_prefix = "["; // sub-level pair prefix
-    c_str_wrapper pair_delim = ": "; // base- and sub-level pair delimiter
-    c_str_wrapper pair_suffix = "]"; // sub-level pair suffix
+    const char* pair_prefix = "["; // sub-level pair prefix
+    const char* pair_delim = ": "; // base- and sub-level pair delimiter
+    const char* pair_suffix = "]"; // sub-level pair suffix
     // base-level example for pair<int, string>: 1: One
     // sub-level example for map<int, string>: [1: One], [2: Two], [3: Three]
 
@@ -143,10 +117,16 @@ struct delimiters { // delimiters and related values
     // n/a for string or default output; for example, string("Hello") and
     // int(123) will be output normally regardless of this setting
 
-    c_str_wrapper empty = "<empty>"; // text for empty object or empty sequence
+    const char* empty = "<empty>"; // text for empty object or empty sequence
 
-    // note: delimiter stores c_str_wrappers and thus is valid for so long as
-    // the c_str_wrappers (C string pointers) are valid
+    // note: delimiter stores C style string pointers and thus is valid for so
+    // long as those pointers are valid
+    // note 2: I considered using std::string_view instead of C style string
+    // pointers but I became disenchanted with it, at least for my purpose here.
+    // First, string_view stores both a pointer to the string and its length
+    // (and not just a pointer); second, string_view computes the length of the
+    // string on construction, though this looks like a compile-time computation
+    // for string literals.
 };
 
 // delimited_inserter:
@@ -250,7 +230,7 @@ void output_helper(const std::tuple<Ts...>& tuple, const delimiters& delims, boo
     if (n == 0)
         out << delims.empty;
     else {
-        auto delim = as_sub ? delims.sub_delim.c_str() : delims.base_delim.c_str();
+        auto delim = as_sub ? delims.sub_delim : delims.base_delim;
         auto delim2 = "";
         std::apply([&](const auto&... args) {
             ((out << delim2, output_helper(args, delims, true, out), delim2 = delim), ...);
@@ -288,7 +268,7 @@ void output_helper(const T& range, const delimiters& delims, bool as_sub, std::b
 
 template <typename CharT, typename Traits>
 inline void output_helper(const char* str, const delimiters& delims, bool, std::basic_ostream<CharT, Traits>& out)
-{auto wstr = c_str_wrapper(str); out << (*wstr.c_str() ? wstr : delims.empty);}
+{out << (*str ? str : delims.empty);}
 
 template <typename CharT, typename Traits>
 inline void output_helper(const std::string& str, const delimiters& delims, bool, std::basic_ostream<CharT, Traits>& out)
