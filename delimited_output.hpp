@@ -91,20 +91,20 @@ struct delimiters { // delimiters and related values
     // herein, "collection" refers to a sequence or collection of elements such
     // as in a container, sequence, tuple or pair
 
-    const char* base_delim = ", "; // base-level collection delimiter (except for pair)
+    std::string_view base_delim = ", "; // base-level collection delimiter (except for pair)
     // example for tuple<int, string, int>: 1, Two, 3
     // example for container of ints: 10, 20, 30, 40, 50
 
     // values for recursively output sub-level collection (except for pair):
-    const char* sub_prefix = "("; // sub-level collection prefix
-    const char* sub_delim = ", "; // sub-level delimiter
-    const char* sub_suffix = ")"; // sub-level collection suffix
+    std::string_view sub_prefix = "("; // sub-level collection prefix
+    std::string_view sub_delim = ", "; // sub-level delimiter
+    std::string_view sub_suffix = ")"; // sub-level collection suffix
     // example for container of tuples: (1, Two, 3), (4, Five, 6), (7, Eight, 9)
 
     // values for base-level and recursively output sub-level pair:
-    const char* pair_prefix = "["; // sub-level pair prefix
-    const char* pair_delim = ": "; // base- and sub-level pair delimiter
-    const char* pair_suffix = "]"; // sub-level pair suffix
+    std::string_view pair_prefix = "["; // sub-level pair prefix
+    std::string_view pair_delim = ": "; // base- and sub-level pair delimiter
+    std::string_view pair_suffix = "]"; // sub-level pair suffix
     // base-level example for pair<int, string>: 1: One
     // sub-level example for map<int, string>: [1: One], [2: Two], [3: Three]
 
@@ -117,16 +117,10 @@ struct delimiters { // delimiters and related values
     // n/a for string or default output; for example, string("Hello") and
     // int(123) will be output normally regardless of this setting
 
-    const char* empty = "<empty>"; // text for empty object or empty sequence
+    std::string_view empty = "<empty>"; // text for empty object or empty sequence
 
-    // note: delimiter stores C style string pointers and thus is valid for so
-    // long as those pointers are valid
-    // note 2: I considered using std::string_view instead of C style string
-    // pointers but I became disenchanted with it, at least for my purpose here.
-    // First, string_view stores both a pointer to the string and its length
-    // (and not just a pointer); second, string_view computes the length of the
-    // string on construction, though this looks like a compile-time computation
-    // for string literals.
+    // note: delimiter stores string views and thus is valid for so long as
+    // those string views are valid
 };
 
 // delimited_inserter:
@@ -151,28 +145,28 @@ public:
     // Each function return a reference to *this so calls can be chained; e.g.,
     // cout << delimited(container).delimiter(" - ").empty("Empty")
 
-    auto& delimiter(const char* str) // sets base_delim and sub_delim (but not pair_delim)
+    auto& delimiter(std::string_view str) // sets base_delim and sub_delim (but not pair_delim)
     {delims.base_delim = str; delims.sub_delim = str; return *this;}
 
-    auto& base_delim(const char* str)
+    auto& base_delim(std::string_view str)
     {delims.base_delim = str; return *this;}
 
-    auto& sub_prefix(const char* str)
+    auto& sub_prefix(std::string_view str)
     {delims.sub_prefix = str; return *this;}
 
-    auto& sub_delim(const char* str)
+    auto& sub_delim(std::string_view str)
     {delims.sub_delim = str; return *this;}
 
-    auto& sub_suffix(const char* str)
+    auto& sub_suffix(std::string_view str)
     {delims.sub_suffix = str; return *this;}
 
-    auto& pair_prefix(const char* str)
+    auto& pair_prefix(std::string_view str)
     {delims.pair_prefix = str; return *this;}
 
-    auto& pair_delim(const char* str)
+    auto& pair_delim(std::string_view str)
     {delims.pair_delim = str; return *this;}
 
-    auto& pair_suffix(const char* str)
+    auto& pair_suffix(std::string_view str)
     {delims.pair_suffix = str; return *this;}
 
     auto& base_as_sub(bool b = true)
@@ -181,7 +175,7 @@ public:
     auto& as_sub(bool b = true) // concise alternative; e.g.: delimited(arr).as_sub()
     {delims.base_as_sub = b; return *this;}
 
-    auto& empty(const char* str)
+    auto& empty(std::string_view str)
     {delims.empty = str; return *this;}
 };
 
@@ -231,7 +225,7 @@ void output_helper(const std::tuple<Ts...>& tuple, const delimiters& delims, boo
         out << delims.empty;
     else {
         auto delim = as_sub ? delims.sub_delim : delims.base_delim;
-        auto delim2 = "";
+        decltype(delim) delim2 = "";
         std::apply([&](const auto&... args) {
             ((out << delim2, output_helper(args, delims, true, out), delim2 = delim), ...);
         }, tuple);
