@@ -26,8 +26,8 @@ public:
     const char* c_str() const {return p;} // mirroring std::string::c_str()
 
     // note: no conversion operator to const char* is provided because of
-    // well-known problems with automatic conversions
-    // note2: c_str_wrapper has the same invalidation rule as const char*
+    // well-known problems with automatic conversions.
+    // note2: c_str_wrapper is valid for so long as the stored pointer is valid
 };
 
 template <typename CharT, typename Traits>
@@ -80,8 +80,8 @@ inline std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, T
 // functions is in delimiter_inserter below.
 
 // delimited() returns a helper object that stores a reference or iterator pair
-// to the object or sequence to output, and thus has the invalidation rule for
-// that reference or iterator pair. Note: an expression such as
+// to the object or sequence to output, and thus is valid for so long as the
+// reference or iterator pair is valid. Note: an expression such as
 //    std::cout << delimited(std::string("Hello"))
 // is OK as the helper object will be valid for the duration of the expression.
 
@@ -145,8 +145,8 @@ struct delimiters { // delimiters and related values
 
     c_str_wrapper empty = "<empty>"; // text for empty object or empty sequence
 
-    // note: delimiter stores c_str_wrappers and thus has c_str_wrapper's
-    // invalidation rule
+    // note: delimiter stores c_str_wrappers and thus is valid for so long as
+    // the c_str_wrappers (C string pointers) are valid
 };
 
 // delimited_inserter:
