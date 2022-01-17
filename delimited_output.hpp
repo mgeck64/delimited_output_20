@@ -107,7 +107,7 @@ struct basic_delimiters { // delimiters and related values
     // herein, "collection" refers to a sequence or collection of elements such
     // as in a container, sequence, tuple or pair
 
-    static constexpr auto base_delim_default = detail::str_literal_cast<CharT>(", ");
+    static constexpr auto top_delim_default = detail::str_literal_cast<CharT>(", ");
     static constexpr auto sub_prefix_default = detail::str_literal_cast<CharT>("(");
     static constexpr auto sub_delim_default = detail::str_literal_cast<CharT>(", ");
     static constexpr auto sub_suffix_default = detail::str_literal_cast<CharT>(")");
@@ -118,7 +118,7 @@ struct basic_delimiters { // delimiters and related values
 
     using string_view = std::basic_string_view<CharT, Traits>;
 
-    string_view base_delim = base_delim_default.view(); // base-level collection delimiter (except for pair)
+    string_view top_delim = top_delim_default.view(); // top-level collection delimiter (except for pair)
     // example for tuple<int, string, int>: 1, Two, 3
     // example for container of ints: 10, 20, 30, 40, 50
 
@@ -128,14 +128,14 @@ struct basic_delimiters { // delimiters and related values
     string_view sub_suffix = sub_suffix_default.view(); // sub-level collection suffix
     // example for container of tuples: (1, Two, 3), (4, Five, 6), (7, Eight, 9)
 
-    // values for base-level and recursively output sub-level pair:
+    // values for top-level and recursively output sub-level pair:
     string_view pair_prefix = pair_prefix_default.view(); // sub-level pair prefix
-    string_view pair_delim = pair_delim_default.view(); // base- and sub-level pair delimiter
+    string_view pair_delim = pair_delim_default.view(); // top- and sub-level pair delimiter
     string_view pair_suffix = pair_suffix_default.view(); // sub-level pair suffix
-    // base-level example for pair<int, string>: 1: One
+    // top-level example for pair<int, string>: 1: One
     // sub-level example for map<int, string>: [1: One], [2: Two], [3: Three]
 
-    bool base_as_sub = false; // output base-level collection like sub-level one
+    bool top_as_sub = false; // output top-level collection like sub-level one
     // true example for tuple<int, string, int>: (1, Two, 3)
     // true example for container of ints: (10, 20, 30, 40, 50)
     // true example for container of tuples: ((1, Two, 3), (4, Five, 6), (7, Eight, 9))
@@ -146,8 +146,8 @@ struct basic_delimiters { // delimiters and related values
 
     string_view empty = empty_default.view(); // text for empty object or empty sequence
 
-    // note: delimiter stores string views and thus is valid for so long as
-    // those string views are valid
+    // note: delimiter stores string views, which are essentially references,
+    // and thus are only as valid as such
 };
 
 using delimiters = basic_delimiters<char>;
@@ -168,7 +168,7 @@ public:
     // stream inserter:
 
     friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& out, const basic_inserter<Object, CharT, Traits>& di)
-    {output_helper(di.obj, di.delims, di.delims.base_as_sub, out); return out;}
+    {output_helper(di.obj, di.delims, di.delims.top_as_sub, out); return out;}
 
     // value setters:
     // Each function return a reference to *this so calls can be chained; e.g.,
@@ -176,11 +176,11 @@ public:
 
     using string_view = std::basic_string_view<CharT, Traits>;
 
-    auto& delimiter(string_view str) // sets base_delim and sub_delim (but not pair_delim)
-    {delims.base_delim = str; delims.sub_delim = str; return *this;}
+    auto& delimiter(string_view str) // sets top_delim and sub_delim (but not pair_delim)
+    {delims.top_delim = str; delims.sub_delim = str; return *this;}
 
-    auto& base_delim(string_view str)
-    {delims.base_delim = str; return *this;}
+    auto& top_delim(string_view str)
+    {delims.top_delim = str; return *this;}
 
     auto& sub_prefix(string_view str)
     {delims.sub_prefix = str; return *this;}
@@ -200,11 +200,11 @@ public:
     auto& pair_suffix(string_view str)
     {delims.pair_suffix = str; return *this;}
 
-    auto& base_as_sub(bool b = true)
-    {delims.base_as_sub = b; return *this;}
+    auto& top_as_sub(bool b = true)
+    {delims.top_as_sub = b; return *this;}
 
     auto& as_sub(bool b = true) // concise alternative; e.g.: delimited(arr).as_sub()
-    {delims.base_as_sub = b; return *this;}
+    {delims.top_as_sub = b; return *this;}
 
     auto& empty(string_view str)
     {delims.empty = str; return *this;}
@@ -261,7 +261,7 @@ void output_helper(const std::tuple<Ts...>& tuple, const basic_delimiters<CharT,
     if (n == 0)
         out << delims.empty;
     else {
-        auto delim = as_sub ? delims.sub_delim : delims.base_delim;
+        auto delim = as_sub ? delims.sub_delim : delims.top_delim;
         decltype(delim) delim2 = "";
         std::apply([&](const auto&... args) {
             ((out << delim2, output_helper(args, delims, true, out), delim2 = delim), ...);
@@ -285,7 +285,7 @@ void output_helper(const T& range, const basic_delimiters<CharT, Traits>& delims
     else {
         auto itr = begin;
         output_helper(*itr, delims, true, out);
-        auto delim = as_sub ? delims.sub_delim : delims.base_delim;
+        auto delim = as_sub ? delims.sub_delim : delims.top_delim;
         while (++itr != end) {
             out << delim;
             output_helper(*itr, delims, true, out);

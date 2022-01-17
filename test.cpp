@@ -85,7 +85,7 @@ int main() {
         delims.pair_prefix = L"(Key: ";
         delims.pair_delim = L", Value: ";
         delims.pair_suffix = L")";
-        delims.base_delim = L"\n";
+        delims.top_delim = L"\n";
         wcout << delimited(a_map, delims) << endl;
     }
     {
@@ -95,7 +95,7 @@ int main() {
             map<int, const char*>{{2, "Two"}, {4, "Four"}, {6, "Six"}},
             map<int, const char*>{{0, "Zero"}, {9, "Nine"}}
         };
-        cout << delimited(maps).sub_prefix("").sub_suffix("").base_delim("\n") << endl;
+        cout << delimited(maps).sub_prefix("").sub_suffix("").top_delim("\n") << endl;
     }
     {
         cout << endl;
@@ -105,7 +105,7 @@ int main() {
             {{11, 12}, {13, 14, 15}}
         };
         cout << delimited(vectors) << endl;
-        cout << delimited(vectors).base_delim(" | ") << endl;
+        cout << delimited(vectors).top_delim(" | ") << endl;
         cout << delimited(vectors).delimiter(",") << endl;
     }
     {
@@ -121,6 +121,6 @@ int main() {
             tuple{"Jul", "Aug", "Sep"},
             tuple{"Oct", "Nov", "Dec"}
         };
-        cout << delimited(seasons).base_delim("\n") << endl;
+        cout << delimited(seasons).top_delim("\n") << endl;
     }
 }
