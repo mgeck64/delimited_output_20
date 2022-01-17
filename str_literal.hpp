@@ -13,17 +13,20 @@ namespace delimited_output::detail {
 
 template <typename CharT, typename Traits, std::size_t Size>
 struct str_literal {
-    constexpr const CharT* data() const {return data_buf;}
-    constexpr const CharT* c_str() const {return data_buf;}
+    constexpr const CharT* data() const {return cdata;}
+    constexpr const CharT* c_str() const {return cdata;}
     constexpr std::size_t size() const {return Size;}
-    constexpr std::basic_string_view<CharT, Traits> view() const {return {data_buf, Size};}
+    constexpr std::basic_string_view<CharT, Traits> view() const {return {cdata, Size};}
     // extend as needed
 
-    const CharT data_buf[Size + 1]; // +1 for null-terminator
+    const CharT cdata[Size + 1]; // +1 for null-terminator
+    // Note: want to make cdata private but can't figure out how to make that
+    // work with str_literal_cast; even making str_literal_cast a friend doesn't
+    // work.
 };
 
 template <typename CharT, typename Traits = std::char_traits<CharT>, std::size_t N, typename Indices = std::make_index_sequence<N - 1>>
-constexpr str_literal<CharT, Traits, N - 1> str_literal_cast(const char(&a)[N]) {
+constexpr auto str_literal_cast(const char(&a)[N]) -> str_literal<CharT, Traits, N - 1> {
     static_assert(N > 0);
     auto helper = []<std::size_t... I>
             (const char(&a)[N], std::index_sequence<I...>) -> str_literal<CharT, Traits, N - 1> {
