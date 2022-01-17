@@ -65,27 +65,28 @@ int main() {
         cout << delimited(week).delimiter(" - ") << endl;
     }
     {
-        cout << endl;
+        wcout << endl;
+        wcout << wdelimited(std::wstring(L"Wide string")) << endl;
         auto vec = vector{10, 20, 50, 40, 60, 30, 100, 150, 110, 0};
         vec.emplace_back(90);
         vec.emplace_back(70);
-        cout << delimited(vec).as_sub() << endl;
+        wcout << wdelimited(vec).as_sub() << endl;
         sort(vec.begin(), vec.end());
-        cout << delimited(vec).as_sub() << endl;
+        wcout << wdelimited(vec).as_sub() << endl;
         vec.clear();
-        cout << delimited(vec) << endl;
-        cout << delimited(vec).empty("Empty!") << endl;
+        wcout << wdelimited(vec) << endl;
+        wcout << wdelimited(vec).empty(L"Empty!") << endl;
     }
     {
-        cout << endl;
+        wcout << endl;
         auto a_map = map<int, const char*>{{1, "One"}, {2, "Two"}, {4, "Four"}};
-        cout << delimited(a_map) << endl;
-        auto delims = delimiters{};
-        delims.pair_prefix = "(Key: ";
-        delims.pair_delim = ", Value: ";
-        delims.pair_suffix = ")";
-        delims.base_delim = "\n";
-        cout << delimited(a_map, delims) << endl;
+        wcout << wdelimited(a_map) << endl;
+        auto delims = wdelimiters{};
+        delims.pair_prefix = L"(Key: ";
+        delims.pair_delim = L", Value: ";
+        delims.pair_suffix = L")";
+        delims.base_delim = L"\n";
+        wcout << delimited(a_map, delims) << endl;
     }
     {
         cout << endl;
