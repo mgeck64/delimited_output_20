@@ -36,10 +36,10 @@ constexpr auto str_literal_cast(const char(&a)[N]) -> str_literal<CharT, Traits,
             throw std::out_of_range("Value in ASCII range (0...127) was expected");
         return c;
     };
-    auto initializers = [&]<std::size_t... I>(const char(&a)[N], std::index_sequence<I...>) -> str_literal<CharT, Traits, N - 1> {
+    auto initialized_str_literal = [&]<std::size_t... I>(const char(&a)[N], std::index_sequence<I...>) -> str_literal<CharT, Traits, N - 1> {
         return {ascii_range_validated(a[I])..., 0};
     };
-    return initializers(a, Indices{});
+    return initialized_str_literal(a, Indices{});
 }
 
 // Usage:
