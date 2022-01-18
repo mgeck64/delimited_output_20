@@ -8,6 +8,9 @@
 // strings of other char types (e.g., wchar_t) at compile-time. Solves a problem
 // where we want to assign a string literal to a string type with a
 // parameterized char type (see usage example for clarification).
+//
+// This is adapted from Method 3 described here:
+// https://stackoverflow.com/questions/52737760/how-to-define-string-literal-with-character-type-that-depends-on-template-parame
 
 namespace delimited_output::detail {
 
@@ -28,11 +31,15 @@ struct str_literal {
 template <typename CharT, typename Traits = std::char_traits<CharT>, std::size_t N, typename Indices = std::make_index_sequence<N - 1>>
 constexpr auto str_literal_cast(const char(&a)[N]) -> str_literal<CharT, Traits, N - 1> {
     static_assert(N > 0);
-    auto helper = []<std::size_t... I>
-            (const char(&a)[N], std::index_sequence<I...>) -> str_literal<CharT, Traits, N - 1> {
-        return {a[I]..., 0};
+    auto ascii_range_validated = [](unsigned char c) -> char {
+        if (c > 127)
+            throw std::out_of_range("Value in ASCII range (0...127) was expected");
+        return c;
     };
-    return helper(a, Indices{});
+    auto initializers = [&]<std::size_t... I>(const char(&a)[N], std::index_sequence<I...>) -> str_literal<CharT, Traits, N - 1> {
+        return {ascii_range_validated(a[I])..., 0};
+    };
+    return initializers(a, Indices{});
 }
 
 // Usage:
