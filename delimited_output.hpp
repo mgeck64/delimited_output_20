@@ -241,8 +241,7 @@ void output_helper(const std::pair<T1, T2>& pair, const basic_delimiters<CharT, 
 // output a tuple:
 
 template<typename... Ts, typename CharT, typename Traits>
-void output_helper(const std::tuple<Ts...>& tuple, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out)
-{
+void output_helper(const std::tuple<Ts...>& tuple, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out) {
     if (as_sub)
         out << delims.sub_prefix;
     auto n = sizeof...(Ts);
@@ -262,8 +261,7 @@ void output_helper(const std::tuple<Ts...>& tuple, const basic_delimiters<CharT,
 // output a range:
 
 template <std::ranges::range T, typename CharT, typename Traits>
-void output_helper(const T& range, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out)
-{
+void output_helper(const T& range, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out) {
     if (as_sub)
         out << delims.sub_prefix;
     auto begin = range.begin();
