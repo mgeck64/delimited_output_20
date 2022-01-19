@@ -4,43 +4,53 @@
 #include <utility>
 #include <string>
 
-// Helper struct and function for converting normal char string literals to
-// strings of other char types (e.g., wchar_t) at compile-time. Solves a problem
-// where we want to assign a string literal to a string type with a
-// parameterized char type (see usage example for clarification).
+// Struct and function for converting a c-style string literal to a c-style
+// string literal of a parameterized character type at compile-time.
+// (See usage example below for clarification.)
 //
 // This is adapted from Method 3 described here:
 // https://stackoverflow.com/questions/52737760/how-to-define-string-literal-with-character-type-that-depends-on-template-parame
 
-namespace delimited_output::detail {
+namespace delimited_output {
 
-template <typename CharT, typename Traits, std::size_t Size>
-struct str_literal {
-    constexpr const CharT* data() const {return cdata;}
-    constexpr const CharT* c_str() const {return cdata;}
-    constexpr std::size_t size() const {return Size;}
-    constexpr std::basic_string_view<CharT, Traits> view() const {return {cdata, Size};}
+template <typename CharT, std::size_t Capacity>
+class str_literal {
+    CharT data_[Capacity]; // includes space for null-terminator
+
+public:
+    static_assert(Capacity > 0);
+
+    constexpr const CharT* data() const {return data_;}
+    constexpr const CharT* c_str() const {return data_;}
+    constexpr std::size_t size() const {return Capacity - 1;} // exclude null-terminator
+    constexpr CharT operator[](std::size_t i) const {return data_[i];}
+    constexpr CharT const* begin() const {return data_;}
+    constexpr CharT const* end() const {return data_ + size();} // end is at null-terminator
+
+    template <typename Traits = std::char_traits<CharT>>
+    constexpr std::basic_string_view<CharT, Traits> view() const {return {data_, size()};}
     // extend as needed
 
-    const CharT cdata[Size + 1]; // +1 for null-terminator
-    // Note: want to make cdata private but can't figure out how to make that
-    // work with str_literal_cast; even making str_literal_cast a friend doesn't
-    // work.
+    template <typename SrcCharT>
+    constexpr str_literal(SrcCharT(&src)[Capacity]) {
+        auto p_data = data_;
+        for (auto c : src) {
+            if (c < 0 || c > 127)
+                // Assume Unicode encoding; restrict source characters to common
+                // ASCII subset so they can simply be copied.
+                throw std::out_of_range("Value in ASCII range (0...127) was expected");
+            if (p_data == end() && c != 0)
+                throw std::invalid_argument("Null-terminated string was expected");
+            *p_data++ = c;
+        }
+    }
 };
 
-template <typename CharT, typename Traits = std::char_traits<CharT>, std::size_t N, typename Indices = std::make_index_sequence<N - 1>>
-constexpr auto str_literal_cast(const char(&a)[N]) -> str_literal<CharT, Traits, N - 1> {
-    static_assert(N > 0);
-    auto ascii_range_validated = [](unsigned char c) -> char {
-        if (c > 127)
-            throw std::out_of_range("Value in ASCII range (0...127) was expected");
-        return c;
-    };
-    auto initialized_str_literal = [&]<std::size_t... I>(const char(&a)[N], std::index_sequence<I...>) -> str_literal<CharT, Traits, N - 1> {
-        return {ascii_range_validated(a[I])..., 0};
-    };
-    return initialized_str_literal(a, Indices{});
+template <typename DstCharT, typename SrcCharT, std::size_t Capacity>
+constexpr auto str_literal_cast(const SrcCharT(&src)[Capacity]) -> auto {
+    return str_literal<DstCharT, Capacity>(src);
 }
+
 
 // Usage:
 //
@@ -49,6 +59,6 @@ constexpr auto str_literal_cast(const char(&a)[N]) -> str_literal<CharT, Traits,
 //     static constexpr auto str = str_literal_cast<CharT>("abc");
 // };
 
-} // namespace delimited_output::detail
+} // namespace delimited_output
 
 #endif // STR_LITERAL_HPP
