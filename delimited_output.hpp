@@ -107,14 +107,14 @@ struct basic_delimiters { // delimiters and related values
     // herein, "collection" refers to a sequence or collection of elements such
     // as in a container, sequence, tuple or pair
 
-    static constexpr auto top_delim_default = detail::str_literal_cast<CharT>(", ");
-    static constexpr auto sub_prefix_default = detail::str_literal_cast<CharT>("(");
-    static constexpr auto sub_delim_default = detail::str_literal_cast<CharT>(", ");
-    static constexpr auto sub_suffix_default = detail::str_literal_cast<CharT>(")");
-    static constexpr auto pair_prefix_default = detail::str_literal_cast<CharT>("[");
-    static constexpr auto pair_delim_default = detail::str_literal_cast<CharT>(": ");
-    static constexpr auto pair_suffix_default = detail::str_literal_cast<CharT>("]");
-    static constexpr auto empty_default = detail::str_literal_cast<CharT>("<empty>");
+    static constexpr auto top_delim_default = str_literal_cast<CharT>(", ");
+    static constexpr auto sub_prefix_default = str_literal_cast<CharT>("(");
+    static constexpr auto sub_delim_default = str_literal_cast<CharT>(", ");
+    static constexpr auto sub_suffix_default = str_literal_cast<CharT>(")");
+    static constexpr auto pair_prefix_default = str_literal_cast<CharT>("[");
+    static constexpr auto pair_delim_default = str_literal_cast<CharT>(": ");
+    static constexpr auto pair_suffix_default = str_literal_cast<CharT>("]");
+    static constexpr auto empty_default = str_literal_cast<CharT>("<empty>");
 
     using string_view = std::basic_string_view<CharT, Traits>;
 
