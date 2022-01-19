@@ -52,7 +52,7 @@ namespace delimited_output {
 //     cout << delimited(arr).delimiter(" - ").empty("Empty")
 // Delimiter values can also be specified via a delimiters object. The complete
 // set of delimiter values is in delimiters below and the complete set of setter
-// functions is in delimiter_inserter below.
+// functions is in delimited_inserter below.
 
 // wdelimited() is also provided for wide char (wchar_t) streams (with default
 // char traits). wdelimited() works just like delimited(). delimited() can also
@@ -68,37 +68,33 @@ namespace delimited_output {
 template <typename T>
 concept iterator = std::input_or_output_iterator<T>;
 
-template <typename, typename CharT, typename Traits = std::char_traits<CharT>> class basic_inserter;
-template <iterator, typename CharT, typename Traits = std::char_traits<CharT>> class basic_sequence_inserter;
 template <typename, typename> struct basic_delimiters;
+template <typename, typename CharT, typename Traits = std::char_traits<CharT>> class delimited_inserter;
+template <iterator, typename CharT, typename Traits = std::char_traits<CharT>> class sequence_delimited_inserter;
 
 template <typename CharT = char, typename Traits = std::char_traits<CharT>, typename Object>
 inline auto delimited(const Object& obj)
-{return basic_inserter<Object, CharT, Traits>{obj};}
+{return delimited_inserter<Object, CharT, Traits>{obj};}
 
 template <typename CharT, typename Traits, typename Object>
 inline auto delimited(const Object& obj, const basic_delimiters<CharT, Traits>& delims)
-{return basic_inserter<Object, CharT, Traits>{obj, delims};}
+{return delimited_inserter<Object, CharT, Traits>{obj, delims};}
 
 template <typename CharT = char, typename Traits = std::char_traits<CharT>, iterator Iterator>
 inline auto delimited(Iterator begin, Iterator end)
-{return basic_sequence_inserter<Iterator, CharT, Traits>{begin, end};}
+{return sequence_delimited_inserter<Iterator, CharT, Traits>{begin, end};}
 
 template <typename CharT, typename Traits, iterator Iterator>
 inline auto delimited(Iterator begin, Iterator end, const basic_delimiters<CharT, Traits>& delims)
-{return basic_sequence_inserter<Iterator, CharT, Traits>{begin, end, delims};}
+{return sequence_delimited_inserter<Iterator, CharT, Traits>{begin, end, delims};}
 
 template <typename Object>
 inline auto wdelimited(const Object& obj)
-{return basic_inserter<Object, wchar_t>{obj};}
+{return delimited_inserter<Object, wchar_t>{obj};}
 
 template <iterator Iterator>
 inline auto wdelimited(Iterator begin, Iterator end)
-{return basic_sequence_inserter<Iterator, wchar_t>{begin, end};}
-
-// note: delimited() and wdelimited() are technically redundant but convenient
-// shorthand for instantiating basic_inserter and basic_sequence_inserter for
-// common cases
+{return sequence_delimited_inserter<Iterator, wchar_t>{begin, end};}
 
 // basic_delimiters, delimiters, wdelimiters:
 
@@ -153,21 +149,21 @@ struct basic_delimiters { // delimiters and related values
 using delimiters = basic_delimiters<char>;
 using wdelimiters = basic_delimiters<wchar_t>;
 
-// basic_inserter, inserter, winserter:
+// delimited_inserter:
 
 template <typename Object, typename CharT, typename Traits>
-class basic_inserter {
+class delimited_inserter {
     const Object& obj;
     basic_delimiters<CharT, Traits> delims;
 public:
-    basic_inserter(const Object& obj_)
+    delimited_inserter(const Object& obj_)
         : obj{obj_} {}
-    basic_inserter(const Object& obj_, const basic_delimiters<CharT, Traits>& delims_)
+    delimited_inserter(const Object& obj_, const basic_delimiters<CharT, Traits>& delims_)
         : obj{obj_}, delims{delims_} {}
 
     // stream inserter:
 
-    friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& out, const basic_inserter<Object, CharT, Traits>& di)
+    friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& out, const delimited_inserter<Object, CharT, Traits>& di)
     {output_helper(di.obj, di.delims, di.delims.top_as_sub, out); return out;}
 
     // value setters:
@@ -210,10 +206,7 @@ public:
     {delims.empty = str; return *this;}
 };
 
-template <typename Object> using inserter = basic_inserter<Object, char>;
-template <typename Object> using winserter = basic_inserter<Object, wchar_t>;
-
-// sequence, basic_sequence_inserter, sequence_inserter, sequence_winserter:
+// sequence, sequence_delimited_inserter:
 
 template <iterator Iterator>
 struct sequence {
@@ -223,19 +216,14 @@ struct sequence {
 };
 
 template <iterator Iterator, typename CharT, typename Traits>
-class basic_sequence_inserter: public basic_inserter<sequence<Iterator>, CharT, Traits> {
+class sequence_delimited_inserter: public delimited_inserter<sequence<Iterator>, CharT, Traits> {
     sequence<Iterator> seq;
 public:
-    basic_sequence_inserter(Iterator begin, Iterator end)
-        : basic_inserter<sequence<Iterator>, CharT, Traits>{seq} {seq.begin_itr = begin; seq.end_itr = end;}
-    basic_sequence_inserter(Iterator begin, Iterator end, const basic_delimiters<CharT, Traits>& delims)
-        : basic_inserter<sequence<Iterator>, CharT, Traits>{seq, delims} {seq.begin_itr = begin; seq.end_itr = end;}
+    sequence_delimited_inserter(Iterator begin, Iterator end)
+        : delimited_inserter<sequence<Iterator>, CharT, Traits>{seq} {seq.begin_itr = begin; seq.end_itr = end;}
+    sequence_delimited_inserter(Iterator begin, Iterator end, const basic_delimiters<CharT, Traits>& delims)
+        : delimited_inserter<sequence<Iterator>, CharT, Traits>{seq, delims} {seq.begin_itr = begin; seq.end_itr = end;}
 };
-
-template <iterator Iterator> using sequence_inserter = basic_sequence_inserter<Iterator, char>;
-template <iterator Iterator> using sequence_winserter = basic_sequence_inserter<Iterator, wchar_t>;
-
-// output helper functions:
 
 // output a pair:
 
@@ -319,7 +307,6 @@ concept ostream_insertable = requires(std::basic_ostream<CharT, Traits>& out, co
 template <typename CharT, typename Traits, ostream_insertable<CharT, Traits> T>
 inline void output_helper(const T& x, const basic_delimiters<CharT, Traits>&, bool, std::basic_ostream<CharT, Traits>& out)
 {out << x;}
-
 
 } // namespace delimited_output
 
