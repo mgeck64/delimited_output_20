@@ -13,6 +13,10 @@ int main() {
     using namespace std;
     using namespace delimited_output;
 
+    // Note: we're switching between outputting to cout and wcout, which is
+    // a no-no according to the standard from what I can tell, but seems to be
+    // working ok (so long as first write is to cout): g++ 11.2.0 for Ubuntu.
+
     {
         cout << delimited(6) << endl;
 
@@ -98,15 +102,17 @@ int main() {
         cout << delimited(maps).sub_prefix("").sub_suffix("").top_delim("\n") << endl;
     }
     {
-        cout << endl;
+        wcout << endl;
+        std::wstringstream ss;
         auto vectors = vector<vector<vector<int>>> {
             {{1, 2, 3}, {4}},
             {{5, 6, 7, 8}, {9, 10}},
             {{11, 12}, {13, 14, 15}}
         };
-        cout << delimited(vectors) << endl;
-        cout << delimited(vectors).top_delim(" | ") << endl;
-        cout << delimited(vectors).delimiter(",") << endl;
+        ss << wdelimited(vectors) << '\n';
+        ss << wdelimited(vectors).top_delim(L" | ") << '\n';
+        ss << wdelimited(vectors).delimiter(L",");
+        wcout << ss.str() << endl;
     }
     {
         cout << endl;
