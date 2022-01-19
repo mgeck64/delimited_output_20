@@ -11,7 +11,7 @@
 // this is adapted from Method 3 described here:
 // https://stackoverflow.com/questions/52737760/how-to-define-string-literal-with-character-type-that-depends-on-template-parame
 
-namespace delimited_output {
+namespace delimited_output::helpers {
 
 template <typename CharT, std::size_t Capacity>
 class str_literal {
@@ -57,6 +57,6 @@ constexpr auto str_literal_cast(const SrcCharT(&src)[Capacity]) -> auto {
 //     static constexpr auto abc = str_literal_cast<CharT>("abc");
 // };
 
-} // namespace delimited_output
+} // namespace delimited_output::helpers
 
 #endif // STR_LITERAL_HPP

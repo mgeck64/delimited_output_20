@@ -52,7 +52,7 @@ namespace delimited_output {
 //     cout << delimited(arr).delimiter(" - ").empty("Empty")
 // Delimiter values can also be specified via a delimiters object. The complete
 // set of delimiter values is in delimiters below and the complete set of setter
-// functions is in delimited_inserter below.
+// functions is in inserter below.
 
 // wdelimited() is also provided for wide char (wchar_t) streams (with default
 // char traits). wdelimited() works just like delimited(). delimited() can also
@@ -70,34 +70,34 @@ concept iterator = std::input_or_output_iterator<T>;
 
 template <typename, typename> struct basic_delimiters;
 
-namespace { // helpers
-template <typename, typename CharT, typename Traits = std::char_traits<CharT>> class delimited_inserter;
-template <iterator, typename CharT, typename Traits = std::char_traits<CharT>> class sequence_delimited_inserter;
+namespace helpers {
+template <typename, typename CharT, typename Traits = std::char_traits<CharT>> class inserter;
+template <iterator, typename CharT, typename Traits = std::char_traits<CharT>> class sequence_inserter;
 }
 
 template <typename CharT = char, typename Traits = std::char_traits<CharT>, typename Object>
 inline auto delimited(const Object& obj)
-{return delimited_inserter<Object, CharT, Traits>{obj};}
+{return helpers::inserter<Object, CharT, Traits>{obj};}
 
 template <typename CharT, typename Traits, typename Object>
 inline auto delimited(const Object& obj, const basic_delimiters<CharT, Traits>& delims)
-{return delimited_inserter<Object, CharT, Traits>{obj, delims};}
+{return helpers::inserter<Object, CharT, Traits>{obj, delims};}
 
 template <typename CharT = char, typename Traits = std::char_traits<CharT>, iterator Iterator>
 inline auto delimited(Iterator begin, Iterator end)
-{return sequence_delimited_inserter<Iterator, CharT, Traits>{begin, end};}
+{return helpers::sequence_inserter<Iterator, CharT, Traits>{begin, end};}
 
 template <typename CharT, typename Traits, iterator Iterator>
 inline auto delimited(Iterator begin, Iterator end, const basic_delimiters<CharT, Traits>& delims)
-{return sequence_delimited_inserter<Iterator, CharT, Traits>{begin, end, delims};}
+{return helpers::sequence_inserter<Iterator, CharT, Traits>{begin, end, delims};}
 
 template <typename Object>
 inline auto wdelimited(const Object& obj)
-{return delimited_inserter<Object, wchar_t>{obj};}
+{return helpers::inserter<Object, wchar_t>{obj};}
 
 template <iterator Iterator>
 inline auto wdelimited(Iterator begin, Iterator end)
-{return sequence_delimited_inserter<Iterator, wchar_t>{begin, end};}
+{return helpers::sequence_inserter<Iterator, wchar_t>{begin, end};}
 
 // basic_delimiters, delimiters, wdelimiters:
 
@@ -106,14 +106,14 @@ struct basic_delimiters { // delimiters and related values
     // herein, "collection" refers to a sequence or collection of elements such
     // as in a container, sequence, tuple or pair
 
-    static constexpr auto top_delim_default = str_literal_cast<CharT>(", ");
-    static constexpr auto sub_prefix_default = str_literal_cast<CharT>("(");
-    static constexpr auto sub_delim_default = str_literal_cast<CharT>(", ");
-    static constexpr auto sub_suffix_default = str_literal_cast<CharT>(")");
-    static constexpr auto pair_prefix_default = str_literal_cast<CharT>("[");
-    static constexpr auto pair_delim_default = str_literal_cast<CharT>(": ");
-    static constexpr auto pair_suffix_default = str_literal_cast<CharT>("]");
-    static constexpr auto empty_default = str_literal_cast<CharT>("<empty>");
+    static constexpr auto top_delim_default = helpers::str_literal_cast<CharT>(", ");
+    static constexpr auto sub_prefix_default = helpers::str_literal_cast<CharT>("(");
+    static constexpr auto sub_delim_default = helpers::str_literal_cast<CharT>(", ");
+    static constexpr auto sub_suffix_default = helpers::str_literal_cast<CharT>(")");
+    static constexpr auto pair_prefix_default = helpers::str_literal_cast<CharT>("[");
+    static constexpr auto pair_delim_default = helpers::str_literal_cast<CharT>(": ");
+    static constexpr auto pair_suffix_default = helpers::str_literal_cast<CharT>("]");
+    static constexpr auto empty_default = helpers::str_literal_cast<CharT>("<empty>");
 
     using string_view = std::basic_string_view<CharT, Traits>;
 
@@ -154,7 +154,7 @@ using wdelimiters = basic_delimiters<wchar_t>;
 
 
 
-namespace { // helpers
+namespace helpers {
 
 // ostream_insertable:
 
@@ -163,46 +163,46 @@ concept ostream_insertable = requires(std::basic_ostream<CharT, Traits>& out, co
     {out << x} -> std::convertible_to<std::basic_ostream<CharT, Traits>&>;
 };
 
-// output_helper (these need to be forward declared):
+// output (these need to be forward declared):
 
 template <typename T, typename CharT, typename Traits>
-inline void output_helper(const T& x, const basic_delimiters<CharT, Traits>&, bool, std::basic_ostream<CharT, Traits>& out)
+inline void output(const T& x, const basic_delimiters<CharT, Traits>&, bool, std::basic_ostream<CharT, Traits>& out)
 requires ostream_insertable<T, CharT, Traits>;
 
 template <typename CharT, typename Traits>
-inline void output_helper(const CharT* str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out);
+inline void output(const CharT* str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out);
 
 template <typename CharT, typename Traits, typename Allocator>
-inline void output_helper(const std::basic_string<CharT, Traits, Allocator>& str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out);
+inline void output(const std::basic_string<CharT, Traits, Allocator>& str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out);
 
 template <typename CharT, typename Traits>
-inline void output_helper(const std::basic_string_view<CharT, Traits>& str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out);
+inline void output(const std::basic_string_view<CharT, Traits>& str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out);
 
 template <typename T1, typename T2, typename CharT, typename Traits>
-void output_helper(const std::pair<T1, T2>& pair, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out);
+void output(const std::pair<T1, T2>& pair, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out);
 
 template<typename... Ts, typename CharT, typename Traits>
-void output_helper(const std::tuple<Ts...>& tuple, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out);
+void output(const std::tuple<Ts...>& tuple, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out);
 
 template <std::ranges::range T, typename CharT, typename Traits>
-void output_helper(const T& range, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out);
+void output(const T& range, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out);
 
-// delimited_inserter:
+// inserter:
 
 template <typename Object, typename CharT, typename Traits>
-class delimited_inserter {
+class inserter {
     const Object& obj;
     basic_delimiters<CharT, Traits> delims;
 public:
-    delimited_inserter(const Object& obj_)
+    inserter(const Object& obj_)
         : obj{obj_} {}
-    delimited_inserter(const Object& obj_, const basic_delimiters<CharT, Traits>& delims_)
+    inserter(const Object& obj_, const basic_delimiters<CharT, Traits>& delims_)
         : obj{obj_}, delims{delims_} {}
 
     // stream inserter:
 
-    friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& out, const delimited_inserter<Object, CharT, Traits>& di)
-    {output_helper(di.obj, di.delims, di.delims.top_as_sub, out); return out;}
+    friend std::basic_ostream<CharT, Traits>& operator<<(std::basic_ostream<CharT, Traits>& out, const inserter<Object, CharT, Traits>& di)
+    {output(di.obj, di.delims, di.delims.top_as_sub, out); return out;}
 
     // value setters:
     // Each function return a reference to *this so calls can be chained; e.g.,
@@ -244,7 +244,7 @@ public:
     {delims.empty = str; return *this;}
 };
 
-// sequence, sequence_delimited_inserter:
+// sequence, sequence_inserter:
 
 template <iterator Iterator>
 struct sequence {
@@ -254,53 +254,53 @@ struct sequence {
 };
 
 template <iterator Iterator, typename CharT, typename Traits>
-class sequence_delimited_inserter: public delimited_inserter<sequence<Iterator>, CharT, Traits> {
+class sequence_inserter: public inserter<sequence<Iterator>, CharT, Traits> {
     sequence<Iterator> seq;
 public:
-    sequence_delimited_inserter(Iterator begin, Iterator end)
-        : delimited_inserter<sequence<Iterator>, CharT, Traits>{seq} {seq.begin_itr = begin; seq.end_itr = end;}
-    sequence_delimited_inserter(Iterator begin, Iterator end, const basic_delimiters<CharT, Traits>& delims)
-        : delimited_inserter<sequence<Iterator>, CharT, Traits>{seq, delims} {seq.begin_itr = begin; seq.end_itr = end;}
+    sequence_inserter(Iterator begin, Iterator end)
+        : inserter<sequence<Iterator>, CharT, Traits>{seq} {seq.begin_itr = begin; seq.end_itr = end;}
+    sequence_inserter(Iterator begin, Iterator end, const basic_delimiters<CharT, Traits>& delims)
+        : inserter<sequence<Iterator>, CharT, Traits>{seq, delims} {seq.begin_itr = begin; seq.end_itr = end;}
 };
 
-// default output_helper:
+// default output:
 
 template <typename T, typename CharT, typename Traits>
-inline void output_helper(const T& x, const basic_delimiters<CharT, Traits>&, bool, std::basic_ostream<CharT, Traits>& out)
+inline void output(const T& x, const basic_delimiters<CharT, Traits>&, bool, std::basic_ostream<CharT, Traits>& out)
 requires ostream_insertable<T, CharT, Traits>
 {out << x;}
 
-// output_helper for strings:
+// output for strings:
 
 template <typename CharT, typename Traits>
-inline void output_helper(const CharT* str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out)
+inline void output(const CharT* str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out)
 {if (*str) out << str; else out << delims.empty;}
 
 template <typename CharT, typename Traits, typename Allocator>
-inline void output_helper(const std::basic_string<CharT, Traits, Allocator>& str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out)
+inline void output(const std::basic_string<CharT, Traits, Allocator>& str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out)
 {if (str.size()) out << str; else out << delims.empty;}
 
 template <typename CharT, typename Traits>
-inline void output_helper(const std::basic_string_view<CharT, Traits>& str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out)
+inline void output(const std::basic_string_view<CharT, Traits>& str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out)
 {if (str.size()) out << str; else out << delims.empty;}
 
-// output_helper for pair:
+// output for pair:
 
 template <typename T1, typename T2, typename CharT, typename Traits>
-void output_helper(const std::pair<T1, T2>& pair, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out) {
+void output(const std::pair<T1, T2>& pair, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out) {
     if (as_sub)
         out << delims.pair_prefix;
-    output_helper(pair.first, delims, true, out);
+    output(pair.first, delims, true, out);
     out << delims.pair_delim;
-    output_helper(pair.second, delims, true, out);
+    output(pair.second, delims, true, out);
     if (as_sub)
         out << delims.pair_suffix;
 }
 
-// output_helper for tuple:
+// output for tuple:
 
 template<typename... Ts, typename CharT, typename Traits>
-void output_helper(const std::tuple<Ts...>& tuple, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out) {
+void output(const std::tuple<Ts...>& tuple, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out) {
     if (as_sub)
         out << delims.sub_prefix;
     auto n = sizeof...(Ts);
@@ -310,17 +310,17 @@ void output_helper(const std::tuple<Ts...>& tuple, const basic_delimiters<CharT,
         auto delim = as_sub ? delims.sub_delim : delims.top_delim;
         decltype(delim) delim2 = "";
         std::apply([&](const auto&... args) {
-            ((out << delim2, output_helper(args, delims, true, out), delim2 = delim), ...);
+            ((out << delim2, output(args, delims, true, out), delim2 = delim), ...);
         }, tuple);
     }
     if (as_sub)
         out << delims.sub_suffix;
 }
 
-// output_helper for range:
+// output for range:
 
 template <std::ranges::range T, typename CharT, typename Traits>
-void output_helper(const T& range, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out) {
+void output(const T& range, const basic_delimiters<CharT, Traits>& delims, bool as_sub, std::basic_ostream<CharT, Traits>& out) {
     if (as_sub)
         out << delims.sub_prefix;
     auto begin = range.begin();
@@ -329,18 +329,18 @@ void output_helper(const T& range, const basic_delimiters<CharT, Traits>& delims
         out << delims.empty;
     else {
         auto itr = begin;
-        output_helper(*itr, delims, true, out);
+        output(*itr, delims, true, out);
         auto delim = as_sub ? delims.sub_delim : delims.top_delim;
         while (++itr != end) {
             out << delim;
-            output_helper(*itr, delims, true, out);
+            output(*itr, delims, true, out);
         }
     }
     if (as_sub)
         out << delims.sub_suffix;
 }
 
-} // namespace <anonymous>
+} // namespace helpers
 } // namespace delimited_output
 
 #endif // DELIMITED_OUTPUT_HPP
