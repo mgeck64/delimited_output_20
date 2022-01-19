@@ -65,14 +65,16 @@ namespace delimited_output {
 //    std::cout << delimited(std::string("Hello"))
 // is OK as the helper object will be valid for the duration of the expression.
 
-template <typename T>
-concept iterator = std::input_or_output_iterator<T>;
-
 template <typename, typename> struct basic_delimiters;
 
 namespace helpers {
+
+template <typename T>
+concept iterator = std::input_or_output_iterator<T>;
+
 template <typename, typename CharT, typename Traits = std::char_traits<CharT>> class inserter;
 template <iterator, typename CharT, typename Traits = std::char_traits<CharT>> class sequence_inserter;
+
 }
 
 template <typename Object, typename CharT = char, typename Traits = std::char_traits<CharT>>
@@ -83,11 +85,11 @@ template <typename Object>
 inline auto wdelimited(const Object& obj)
 {return delimited<Object, wchar_t>(obj);}
 
-template <iterator Iterator, typename CharT = char, typename Traits = std::char_traits<CharT>>
+template <helpers::iterator Iterator, typename CharT = char, typename Traits = std::char_traits<CharT>>
 inline auto delimited(Iterator begin, Iterator end)
 {return helpers::sequence_inserter<Iterator, CharT, Traits>{begin, end};}
 
-template <iterator Iterator>
+template <helpers::iterator Iterator>
 inline auto wdelimited(Iterator begin, Iterator end)
 {return delimited<Iterator, wchar_t>(begin, end);}
 
@@ -95,7 +97,7 @@ template <typename Object, typename CharT, typename Traits>
 inline auto delimited(const Object& obj, const basic_delimiters<CharT, Traits>& delims)
 {return helpers::inserter<Object, CharT, Traits>{obj, delims};}
 
-template <iterator Iterator, typename CharT, typename Traits>
+template <helpers::iterator Iterator, typename CharT, typename Traits>
 inline auto delimited(Iterator begin, Iterator end, const basic_delimiters<CharT, Traits>& delims)
 {return helpers::sequence_inserter<Iterator, CharT, Traits>{begin, end, delims};}
 
@@ -152,8 +154,6 @@ struct basic_delimiters { // delimiters and related values
 using delimiters = basic_delimiters<char>;
 using wdelimiters = basic_delimiters<wchar_t>;
 
-
-
 namespace helpers {
 
 // ostream_insertable:
@@ -165,9 +165,8 @@ concept ostream_insertable = requires(std::basic_ostream<CharT, Traits>& out, co
 
 // output (these forward declarations are necessary):
 
-template <typename T, typename CharT, typename Traits>
-inline void output(const T& x, const basic_delimiters<CharT, Traits>&, bool, std::basic_ostream<CharT, Traits>& out)
-requires ostream_insertable<T, CharT, Traits>;
+template <typename CharT, typename Traits, ostream_insertable<CharT, Traits> T>
+inline void output(const T& x, const basic_delimiters<CharT, Traits>&, bool, std::basic_ostream<CharT, Traits>& out);
 
 template <typename CharT, typename Traits>
 inline void output(const CharT* str, const basic_delimiters<CharT, Traits>& delims, bool, std::basic_ostream<CharT, Traits>& out);
@@ -246,7 +245,7 @@ public:
 
 // sequence, sequence_inserter:
 
-template <iterator Iterator>
+template <helpers::iterator Iterator>
 struct sequence {
     Iterator begin_itr, end_itr;
     Iterator begin() const {return begin_itr;}
@@ -265,9 +264,8 @@ public:
 
 // default output:
 
-template <typename T, typename CharT, typename Traits>
+template <typename CharT, typename Traits, ostream_insertable<CharT, Traits> T>
 inline void output(const T& x, const basic_delimiters<CharT, Traits>&, bool, std::basic_ostream<CharT, Traits>& out)
-requires ostream_insertable<T, CharT, Traits>
 {out << x;}
 
 // output for strings:
