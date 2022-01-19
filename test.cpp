@@ -13,9 +13,9 @@ int main() {
     using namespace std;
     using namespace delimited_output;
 
-    // Note: we're switching between outputting to cout and wcout, which is
+    // note: we're switching between outputting to cout and wcout, which is
     // a no-no according to the standard from what I can tell, but seems to be
-    // working ok (so long as first write is to cout): g++ 11.2.0 for Ubuntu.
+    // working ok (so long as first write is to cout): g++ 11.2.0 for Ubuntu
 
     {
         cout << delimited(6) << endl;

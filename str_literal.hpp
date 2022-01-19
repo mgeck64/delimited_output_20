@@ -4,11 +4,11 @@
 #include <utility>
 #include <string>
 
-// Struct and function for converting a c-style string literal to a c-style
-// string literal of a parameterized character type at compile-time.
-// (See usage example below for clarification.)
+// struct and function for converting a c-style string literal to a c-style
+// string literal of a parameterized character type at compile-time. (see usage
+// example below for clarification)
 //
-// This is adapted from Method 3 described here:
+// this is adapted from Method 3 described here:
 // https://stackoverflow.com/questions/52737760/how-to-define-string-literal-with-character-type-that-depends-on-template-parame
 
 namespace delimited_output {
@@ -26,7 +26,6 @@ public:
     constexpr CharT operator[](std::size_t i) const {return data_[i];}
     constexpr CharT const* begin() const {return data_;}
     constexpr CharT const* end() const {return data_ + size();} // end is at null-terminator
-
     template <typename Traits = std::char_traits<CharT>>
     constexpr std::basic_string_view<CharT, Traits> view() const {return {data_, size()};}
     // extend as needed
@@ -36,8 +35,8 @@ public:
         auto p_data = data_;
         for (auto c : src) {
             if (c < 0 || c > 127)
-                // Assume Unicode encoding; restrict source characters to common
-                // ASCII subset so they can simply be copied.
+                // assume unicode encoding; restrict source characters to common
+                // ASCII subset so they can simply be copied
                 throw std::out_of_range("Value in ASCII range (0...127) was expected");
             if (p_data == end() && c != 0)
                 throw std::invalid_argument("Null-terminated string was expected");
@@ -51,12 +50,11 @@ constexpr auto str_literal_cast(const SrcCharT(&src)[Capacity]) -> auto {
     return str_literal<DstCharT, Capacity>(src);
 }
 
-
-// Usage:
+// usage example:
 //
 // template <typename CharT>
-// struct S {
-//     static constexpr auto str = str_literal_cast<CharT>("abc");
+// class c {
+//     static constexpr auto abc = str_literal_cast<CharT>("abc");
 // };
 
 } // namespace delimited_output
