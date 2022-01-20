@@ -20,14 +20,14 @@ class str_literal {
 public:
     static_assert(Capacity > 0);
 
-    constexpr const CharT* data() const {return data_;}
-    constexpr const CharT* c_str() const {return data_;}
-    constexpr std::size_t size() const {return Capacity - 1;} // exclude null-terminator
-    constexpr CharT operator[](std::size_t i) const {return data_[i];}
-    constexpr CharT const* begin() const {return data_;}
-    constexpr CharT const* end() const {return data_ + size();} // end is at null-terminator
+    constexpr const CharT* data() const noexcept {return data_;}
+    constexpr const CharT* c_str() const noexcept {return data_;}
+    constexpr std::size_t size() const noexcept {return Capacity - 1;} // exclude null-terminator
+    constexpr CharT operator[](std::size_t i) const noexcept {return data_[i];}
+    constexpr CharT const* begin() const noexcept {return data_;}
+    constexpr CharT const* end() const noexcept {return data_ + size();} // end is at null-terminator
     template <typename Traits = std::char_traits<CharT>>
-    constexpr std::basic_string_view<CharT, Traits> view() const {return {data_, size()};}
+    constexpr std::basic_string_view<CharT, Traits> view() const noexcept {return {data_, size()};}
     // extend as needed
 
     template <typename SrcCharT>

@@ -193,9 +193,9 @@ class inserter {
     const Object& obj;
     basic_delimiters<CharT, Traits> delims;
 public:
-    inserter(const Object& obj_)
+    inserter(const Object& obj_) noexcept
         : obj{obj_} {}
-    inserter(const Object& obj_, const basic_delimiters<CharT, Traits>& delims_)
+    inserter(const Object& obj_, const basic_delimiters<CharT, Traits>& delims_) noexcept
         : obj{obj_}, delims{delims_} {}
 
     // stream inserter:
@@ -209,37 +209,37 @@ public:
 
     using string_view = std::basic_string_view<CharT, Traits>;
 
-    auto& delimiter(string_view str) // sets top_delim and sub_delim (but not pair_delim)
+    auto& delimiter(string_view str) noexcept // sets top_delim and sub_delim (but not pair_delim)
     {delims.top_delim = str; delims.sub_delim = str; return *this;}
 
-    auto& top_delim(string_view str)
+    auto& top_delim(string_view str) noexcept
     {delims.top_delim = str; return *this;}
 
-    auto& sub_prefix(string_view str)
+    auto& sub_prefix(string_view str) noexcept
     {delims.sub_prefix = str; return *this;}
 
-    auto& sub_delim(string_view str)
+    auto& sub_delim(string_view str) noexcept
     {delims.sub_delim = str; return *this;}
 
-    auto& sub_suffix(string_view str)
+    auto& sub_suffix(string_view str) noexcept
     {delims.sub_suffix = str; return *this;}
 
-    auto& pair_prefix(string_view str)
+    auto& pair_prefix(string_view str) noexcept
     {delims.pair_prefix = str; return *this;}
 
-    auto& pair_delim(string_view str)
+    auto& pair_delim(string_view str) noexcept
     {delims.pair_delim = str; return *this;}
 
-    auto& pair_suffix(string_view str)
+    auto& pair_suffix(string_view str) noexcept
     {delims.pair_suffix = str; return *this;}
 
-    auto& top_as_sub(bool b = true)
+    auto& top_as_sub(bool b = true) noexcept
     {delims.top_as_sub = b; return *this;}
 
-    auto& as_sub(bool b = true) // concise alternative; e.g.: delimited(arr).as_sub()
+    auto& as_sub(bool b = true) noexcept // concise alternative; e.g.: delimited(arr).as_sub()
     {delims.top_as_sub = b; return *this;}
 
-    auto& empty(string_view str)
+    auto& empty(string_view str) noexcept
     {delims.empty = str; return *this;}
 };
 
@@ -256,9 +256,9 @@ template <iterator Iterator, typename CharT, typename Traits>
 class sequence_inserter: public inserter<sequence<Iterator>, CharT, Traits> {
     sequence<Iterator> seq;
 public:
-    sequence_inserter(Iterator begin, Iterator end)
+    sequence_inserter(Iterator begin, Iterator end) noexcept
         : inserter<sequence<Iterator>, CharT, Traits>{seq} {seq.begin_itr = begin; seq.end_itr = end;}
-    sequence_inserter(Iterator begin, Iterator end, const basic_delimiters<CharT, Traits>& delims)
+    sequence_inserter(Iterator begin, Iterator end, const basic_delimiters<CharT, Traits>& delims) noexcept
         : inserter<sequence<Iterator>, CharT, Traits>{seq, delims} {seq.begin_itr = begin; seq.end_itr = end;}
 };
 
