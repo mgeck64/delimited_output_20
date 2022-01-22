@@ -1,3 +1,7 @@
+// test delimited_output with cout (as opposed to wcout). (can't test together
+// because presumably not supposed to use both cout and wcout in the same
+// program; see: http://gcc.gnu.org/ml/gcc-bugs/2006-05/msg01196.html)
+
 #include "delimited_output.hpp"
 
 #include <iostream>
@@ -12,10 +16,6 @@
 int main() {
     using namespace std;
     using namespace delimited_output;
-
-    // note: we're switching between outputting to cout and wcout, which is
-    // a no-no according to the standard from what I can tell, but seems to be
-    // working ok (so long as first write is to cout): g++ 11.2.0 for Ubuntu
 
     {
         cout << delimited(6) << endl;
@@ -69,28 +69,42 @@ int main() {
         cout << delimited(week).delimiter(" - ") << endl;
     }
     {
-        wcout << endl;
-        wcout << wdelimited(std::wstring(L"Wide string")) << endl;
+        cout << endl;
+        auto maps = array{
+            map<int, const char*>{{1, "One"}, {3, "Three"}, {5, "Five"}},
+            map<int, const char*>{{2, "Two"}, {4, "Four"}, {6, "Six"}},
+            map<int, const char*>{{0, "Zero"}, {9, "Nine"}}
+        };
+        cout << delimited(maps).sub_prefix("").sub_suffix("").top_delim("\n") << endl;
+    }
+    {
+        cout << endl;
+        auto strs = array{string{"Hello"}, string{"world"}};
+        cout << delimited(strs) << endl;
+    }
+    {
+        cout << endl;
+        cout << delimited(std::string("Wide string")) << endl;
         auto vec = vector{10, 20, 50, 40, 60, 30, 100, 150, 110, 0};
         vec.emplace_back(90);
         vec.emplace_back(70);
-        wcout << wdelimited(vec).as_sub() << endl;
+        cout << delimited(vec).as_sub() << endl;
         sort(vec.begin(), vec.end());
-        wcout << wdelimited(vec).as_sub() << endl;
+        cout << delimited(vec).as_sub() << endl;
         vec.clear();
-        wcout << wdelimited(vec) << endl;
-        wcout << wdelimited(vec).empty(L"Empty!") << endl;
+        cout << delimited(vec) << endl;
+        cout << delimited(vec).empty("Empty!") << endl;
     }
     {
-        wcout << endl;
+        cout << endl;
         auto a_map = map<int, const char*>{{1, "One"}, {2, "Two"}, {4, "Four"}};
-        wcout << wdelimited(a_map) << endl;
-        auto delims = wdelimiters{};
-        delims.pair_prefix = L"(Key: ";
-        delims.pair_delim = L", Value: ";
-        delims.pair_suffix = L")";
-        delims.top_delim = L"\n";
-        wcout << delimited(a_map, delims) << endl;
+        cout << delimited(a_map) << endl;
+        auto delims = delimiters{};
+        delims.pair_prefix = "(Key: ";
+        delims.pair_delim = ", Value: ";
+        delims.pair_suffix = ")";
+        delims.top_delim = "\n";
+        cout << delimited(a_map, delims) << endl;
     }
     {
         cout << endl;
@@ -102,22 +116,17 @@ int main() {
         cout << delimited(maps).sub_prefix("").sub_suffix("").top_delim("\n") << endl;
     }
     {
-        wcout << endl;
-        std::wstringstream ss;
+        cout << endl;
+        std::stringstream ss;
         auto vectors = vector<vector<vector<int>>> {
             {{1, 2, 3}, {4}},
             {{5, 6, 7, 8}, {9, 10}},
             {{11, 12}, {13, 14, 15}}
         };
-        ss << wdelimited(vectors) << '\n';
-        ss << wdelimited(vectors).top_delim(L" | ") << '\n';
-        ss << wdelimited(vectors).delimiter(L",");
-        wcout << ss.str() << endl;
-    }
-    {
-        cout << endl;
-        auto strs = array{string{"Hello"}, string{"world"}};
-        cout << delimited(strs) << endl;
+        ss << delimited(vectors) << '\n';
+        ss << delimited(vectors).top_delim(" | ") << '\n';
+        ss << delimited(vectors).delimiter(",");
+        cout << ss.str() << endl;
     }
     {
         cout << endl;

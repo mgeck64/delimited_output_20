@@ -306,7 +306,7 @@ void output(const std::tuple<Ts...>& tuple, const basic_delimiters<CharT, Traits
         out << delims.empty;
     else {
         auto delim = as_sub ? delims.sub_delim : delims.top_delim;
-        decltype(delim) delim2 = "";
+        auto delim2 = std::basic_string_view<CharT, Traits>();
         std::apply([&](const auto&... args) {
             ((out << delim2, output(args, delims, true, out), delim2 = delim), ...);
         }, tuple);
