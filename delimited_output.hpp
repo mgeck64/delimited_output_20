@@ -54,9 +54,13 @@ namespace delimited_output {
 // set of delimiter values is in delimiters below and the complete set of setter
 // functions is in inserter below.
 
-// wdelimited() is also provided for wide char (wchar_t) streams (with default
-// char traits). wdelimited() works just like delimited(). delimited() can also
-// be parameterized to work with wide char streams.
+// wdelimited() and wdelimiters are also provided for wide character (wchar_t)
+// streams (with default char traits). delimited() can also be parameterized to
+// work with wide character streams. Examples:
+//     wcout << wdelimited(std::tuple{1, L"Two", 3})
+//     auto delims = wdelimiters{}
+//     wcout << delimited(std::tuple{1, L"Two", 3}, delims)
+//     wcout << delimited<wchar_t>(std::tuple{1, L"Two", 3})
 
 // delimited() or wdelimited() returns a helper object that stores a reference
 // or iterator pair to the object or sequence to output, and thus is valid for
@@ -77,27 +81,27 @@ template <iterator, typename CharT, typename Traits = std::char_traits<CharT>> c
 
 }
 
-template <typename Object, typename CharT = char, typename Traits = std::char_traits<CharT>>
+template <typename CharT = char, typename Traits = std::char_traits<CharT>, typename Object>
 inline auto delimited(const Object& obj)
 {return helpers::inserter<Object, CharT, Traits>{obj};}
 
 template <typename Object>
 inline auto wdelimited(const Object& obj)
-{return delimited<Object, wchar_t>(obj);}
+{return delimited<wchar_t>(obj);}
 
-template <helpers::iterator Iterator, typename CharT = char, typename Traits = std::char_traits<CharT>>
+template <typename CharT = char, typename Traits = std::char_traits<CharT>, helpers::iterator Iterator>
 inline auto delimited(Iterator begin, Iterator end)
 {return helpers::sequence_inserter<Iterator, CharT, Traits>{begin, end};}
 
 template <helpers::iterator Iterator>
 inline auto wdelimited(Iterator begin, Iterator end)
-{return delimited<Iterator, wchar_t>(begin, end);}
+{return delimited<wchar_t>(begin, end);}
 
-template <typename Object, typename CharT, typename Traits>
+template <typename CharT, typename Traits, typename Object>
 inline auto delimited(const Object& obj, const basic_delimiters<CharT, Traits>& delims)
 {return helpers::inserter<Object, CharT, Traits>{obj, delims};}
 
-template <helpers::iterator Iterator, typename CharT, typename Traits>
+template <typename CharT, typename Traits, helpers::iterator Iterator>
 inline auto delimited(Iterator begin, Iterator end, const basic_delimiters<CharT, Traits>& delims)
 {return helpers::sequence_inserter<Iterator, CharT, Traits>{begin, end, delims};}
 
@@ -123,13 +127,13 @@ struct basic_delimiters { // delimiters and related values
     // example for tuple<int, string, int>: 1, Two, 3
     // example for container of ints: 10, 20, 30, 40, 50
 
-    // values for recursively output sub-level collection (except for pair):
+    // values for recursively outputted sub-level collection (except for pair):
     string_view sub_prefix = sub_prefix_default.view(); // sub-level collection prefix
     string_view sub_delim = sub_delim_default.view(); // sub-level delimiter
     string_view sub_suffix = sub_suffix_default.view(); // sub-level collection suffix
     // example for container of tuples: (1, Two, 3), (4, Five, 6), (7, Eight, 9)
 
-    // values for top-level and recursively output sub-level pair:
+    // values for top-level and recursively outputted sub-level pair:
     string_view pair_prefix = pair_prefix_default.view(); // sub-level pair prefix
     string_view pair_delim = pair_delim_default.view(); // top- and sub-level pair delimiter
     string_view pair_suffix = pair_suffix_default.view(); // sub-level pair suffix

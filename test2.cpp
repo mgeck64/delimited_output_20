@@ -123,9 +123,9 @@ int main() {
             {{5, 6, 7, 8}, {9, 10}},
             {{11, 12}, {13, 14, 15}}
         };
-        ss << wdelimited(vectors) << '\n';
-        ss << wdelimited(vectors).top_delim(L" | ") << '\n';
-        ss << wdelimited(vectors).delimiter(L",");
+        ss << delimited<wchar_t>(vectors) << '\n';
+        ss << delimited<wchar_t>(vectors).top_delim(L" | ") << '\n';
+        ss << delimited<wchar_t>(vectors).delimiter(L",");
         wcout << ss.str() << endl;
     }
     {
@@ -136,6 +136,6 @@ int main() {
             tuple{"Jul", "Aug", "Sep"},
             tuple{"Oct", "Nov", "Dec"}
         };
-        wcout << wdelimited(seasons).top_delim(L"\n") << endl;
+        wcout << delimited<wchar_t>(seasons).top_delim(L"\n") << endl;
     }
 }
