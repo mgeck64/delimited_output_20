@@ -164,7 +164,7 @@ namespace helpers {
 
 template <typename T, typename CharT, typename Traits>
 concept ostream_insertable = requires(std::basic_ostream<CharT, Traits>& out, const T& x) {
-    {out << x} -> std::convertible_to<std::basic_ostream<CharT, Traits>&>;
+    {out << x} -> std::same_as<std::basic_ostream<CharT, Traits>&>;
 };
 
 // output (these forward declarations are necessary):
